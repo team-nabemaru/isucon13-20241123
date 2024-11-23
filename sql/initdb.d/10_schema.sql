@@ -104,3 +104,27 @@ CREATE TABLE `reactions` (
   `emoji_name` VARCHAR(255) NOT NULL,
   `created_at` BIGINT NOT NULL
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+
+-- icon_hash
+ALTER TABLE icons ADD icon_hash VARCHAR(255) AFTER user_id;
+
+-- icon_hash on update
+DELIMITER //
+CREATE TRIGGER update_icons
+BEFORE UPDATE ON icons
+FOR EACH ROW
+BEGIN
+SET NEW.icon_hash = SHA2(NEW.image, 256);
+END //
+
+-- icon_hash on create
+DELIMITER //
+CREATE TRIGGER insert_icons
+BEFORE INSERT ON icons
+FOR EACH ROW
+BEGIN
+SET NEW.icon_hash = SHA2(NEW.image, 256);
+END //
+
+
