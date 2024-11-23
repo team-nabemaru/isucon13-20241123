@@ -205,7 +205,7 @@ func postLivecommentHandler(c echo.Context) error {
 	var hitSpam int
 	for _, ngword := range ngwords {
 		query := `
-		SELECT COUNT(*)
+		SELECT COUNT(1)
 		FROM
 		(SELECT ? AS text) AS texts
 		INNER JOIN
@@ -400,7 +400,7 @@ func moderateHandler(c echo.Context) error {
 			WHERE
 			id = ? AND
 			livestream_id = ? AND
-			(SELECT COUNT(*)
+			(SELECT COUNT(1)
 			FROM
 			(SELECT ? AS text) AS texts
 			INNER JOIN
