@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -127,6 +128,8 @@ func main() {
 	cookieStore.Options.Domain = "*.t.isucon.pw"
 	e.Use(session.Middleware(cookieStore))
 	// e.Use(middleware.Recover())
+
+	echov4.Integrate(e)
 
 	// 初期化
 	e.POST("/api/initialize", initializeHandler)
