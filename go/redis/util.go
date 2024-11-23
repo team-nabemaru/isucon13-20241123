@@ -48,7 +48,7 @@ func (r *redisRepository[T]) GetByColumn(
 
 			query := fmt.Sprintf("SELECT %s FROM `%s` WHERE %s = ?", selectColumns, tableName, columnName)
 
-			if err := r.db.GetContext(ctx, &dest, query, columnValue); err != nil {
+			if err := r.db.GetContext(ctx, dest, query, columnValue); err != nil {
 				return result, err
 			}
 
