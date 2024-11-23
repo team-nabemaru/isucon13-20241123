@@ -403,7 +403,7 @@ func verifyUserSession(c echo.Context) error {
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
 	client := redis.NewClient(ctx)
-	themeRepository := redis.NewRedisRepository[ThemeModel](dbConn, *client)
+	themeRepository := redis.NewRedisRepository[ThemeModel](tx, *client)
 	themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
 	if err != nil {
 		return User{}, err

@@ -10,12 +10,12 @@ import (
 )
 
 type redisRepository[T any] struct {
-	db    *sqlx.DB
+	db    *sqlx.Tx
 	cache *Cache[T]
 }
 
 func NewRedisRepository[T any](
-	db *sqlx.DB,
+	db *sqlx.Tx,
 	cacheClient Client,
 ) *redisRepository[T] {
 	return &redisRepository[T]{

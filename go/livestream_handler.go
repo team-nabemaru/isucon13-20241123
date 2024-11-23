@@ -16,6 +16,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var (
+	redisClient = redis.NewClient(context.TODO())
+)
+
 type ReserveLivestreamRequest struct {
 	Tags         []int64 `json:"tags"`
 	Title        string  `json:"title"`
@@ -490,9 +494,11 @@ func getLivecommentReportsHandler(c echo.Context) error {
 //
 //	そのlivestreamModelをもとにLivestreamを作成しています。Livestreamには、オーナー情報、タグ情報が含まれています。
 func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel LivestreamModel) (Livestream, error) {
-	client := redis.NewClient(ctx)
-	userRepository := redis.NewRedisRepository[UserModel](dbConn, *client)
+	userRepository := redis.NewRedisRepository[UserModel](tx, *redisClient)
 	ownerModel, err := userRepository.GetById(ctx, strconv.FormatInt(livestreamModel.UserID, 10), "users")
+	if err != nil {
+		return Livestream{}, err
+	}
 
 	owner, err := fillUserResponse(ctx, tx, ownerModel)
 	if err != nil {
