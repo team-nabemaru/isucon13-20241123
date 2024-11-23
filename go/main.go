@@ -4,6 +4,7 @@ package main
 // sqlx的な参考: https://jmoiron.github.io/sqlx/
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -13,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/isucon/isucon13/webapp/go/redis"
 	"github.com/jmoiron/sqlx"
 	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/labstack/echo/v4"
@@ -109,6 +111,11 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
+	redisClient := redis.NewClient(context.TODO())
+	if err := redisClient.FlushDB(); err != nil {
+		c.Logger().Errorf("failed to flush redis: %v", err)
+	}
+
 	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
 		c.Logger().Warnf("init.sh failed with err=%s", string(out))
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to initialize: "+err.Error())
