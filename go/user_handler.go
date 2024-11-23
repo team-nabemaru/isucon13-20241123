@@ -184,8 +184,7 @@ func getMeHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	client := redis.NewClient(ctx)
-	userRepository := redis.NewRedisRepository[UserModel](tx, *client)
+	userRepository := redis.NewRedisRepository[UserModel](tx, *redisClient)
 	userModel, err := userRepository.GetById(ctx, strconv.FormatInt(userID, 10), "users")
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -403,8 +402,7 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
-	client := redis.NewClient(ctx)
-	themeRepository := redis.NewRedisRepository[ThemeModel](tx, *client)
+	themeRepository := redis.NewRedisRepository[ThemeModel](tx, *redisClient)
 	themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
 	if err != nil {
 		return User{}, err

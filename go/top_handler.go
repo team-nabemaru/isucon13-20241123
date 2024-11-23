@@ -82,8 +82,7 @@ func getStreamerThemeHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
-	client := redis.NewClient(ctx)
-	themeRepository := redis.NewRedisRepository[ThemeModel](tx, *client)
+	themeRepository := redis.NewRedisRepository[ThemeModel](tx, *redisClient)
 	themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
