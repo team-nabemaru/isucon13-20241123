@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -404,8 +405,12 @@ func verifyUserSession(c echo.Context) error {
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
 
-	themeModel := ThemeModel{}
-	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
+	client := redis.NewClient(ctx)
+	themeRepository := redis.NewRedisRepository[ThemeModel](dbConn, *client)
+	themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
+	if err != nil {
+		log.Println("debug")
+		log.Println(err)
 		return User{}, err
 	}
 
