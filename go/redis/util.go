@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -49,14 +48,7 @@ func (r *redisRepository[T]) GetByColumn(
 
 			query := fmt.Sprintf("SELECT %s FROM `%s` WHERE %s = ?", selectColumns, tableName, columnName)
 
-			// columnValueをintに変換可能か確認
-			intValue, err := strconv.Atoi(columnValue)
-			if err == nil {
-				// 変換成功
-				columnValue = intValue
-			}
-
-			if err := r.db.GetContext(ctx, dest, query, columnValue); err != nil {
+			if err := r.db.GetContext(ctx, &dest, query, columnValue); err != nil {
 				return result, err
 			}
 
