@@ -50,17 +50,16 @@ func (r *redisRepository[T]) GetByColumn(
 			query := fmt.Sprintf("SELECT %s FROM `%s` WHERE %s = ?", selectColumns, tableName, columnName)
 
 			// columnValueをintに変換可能か確認
-			var inputValue interface{}
-			inputValue = columnValue
-
 			intValue, err := strconv.Atoi(columnValue)
 			if err == nil {
-				inputValue = intValue
+				// 変換成功
+				columnValue = intValue
 			}
 
-			if err := r.db.GetContext(ctx, dest, query, inputValue); err != nil {
+			if err := r.db.GetContext(ctx, dest, query, columnValue); err != nil {
 				return result, err
 			}
+
 			return result, nil
 		},
 	)
