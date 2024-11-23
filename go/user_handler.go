@@ -184,8 +184,9 @@ func getMeHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	userModel := UserModel{}
-	err = tx.GetContext(ctx, &userModel, "SELECT * FROM users WHERE id = ?", userID)
+	client := redis.NewClient(ctx)
+	userRepository := redis.NewRedisRepository[UserModel](tx, *client)
+	userModel, err := userRepository.GetById(ctx, strconv.FormatInt(userID, 10), "users")
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return echo.NewHTTPError(http.StatusNotFound, "not found user that has the userid in session")
