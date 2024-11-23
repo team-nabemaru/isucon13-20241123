@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -407,6 +408,9 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	client := redis.NewClient(ctx)
 	themeRepository := redis.NewRedisRepository[ThemeModel](dbConn, *client)
 	themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
+	log.Fatalln("debug")
+	log.Println(themeModel)
+	log.Println(err)
 	if err != nil {
 		return User{}, err
 	}
