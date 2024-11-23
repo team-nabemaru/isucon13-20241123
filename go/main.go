@@ -4,7 +4,6 @@ package main
 // sqlx的な参考: https://jmoiron.github.io/sqlx/
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
@@ -34,6 +33,7 @@ var (
 	powerDNSSubdomainAddress string
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
+	redisClient              *redis.Client
 )
 
 func init() {
@@ -111,7 +111,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
-	redisClient := redis.NewClient(context.TODO())
+	redisClient = redis.NewClient(c.Request().Context())
 	if err := redisClient.FlushDB(); err != nil {
 		c.Logger().Errorf("failed to flush redis: %v", err)
 	}

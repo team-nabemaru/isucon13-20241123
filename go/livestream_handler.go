@@ -16,10 +16,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var (
-	redisClient = redis.NewClient(context.TODO())
-)
-
 type ReserveLivestreamRequest struct {
 	Tags         []int64 `json:"tags"`
 	Title        string  `json:"title"`
