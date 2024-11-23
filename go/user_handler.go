@@ -409,7 +409,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	themeRepository := redis.NewRedisRepository[ThemeModel](dbConn, *client)
 	themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
 	if err != nil {
-		log.Fatalln("debug")
+		log.Println("debug")
 		log.Println(err)
 		return User{}, err
 	}
