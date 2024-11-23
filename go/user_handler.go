@@ -10,10 +10,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	"github.com/isucon/isucon13/webapp/go/redis"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -182,8 +184,10 @@ func getMeHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	userModel := UserModel{}
-	err = tx.GetContext(ctx, &userModel, "SELECT * FROM users WHERE id = ?", userID)
+	client := redis.NewClient(ctx)
+	userRepository := redis.NewRedisRepository[UserModel](dbConn, *client)
+	userModel, err := userRepository.GetById(ctx, strconv.FormatInt(userID, 10), "users")
+
 	if errors.Is(err, sql.ErrNoRows) {
 		return echo.NewHTTPError(http.StatusNotFound, "not found user that has the userid in session")
 	}
@@ -399,8 +403,11 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
-	themeModel := ThemeModel{}
-	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
+
+	client := redis.NewClient(ctx)
+	themeRepository := redis.NewRedisRepository[ThemeModel](dbConn, *client)
+	themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
+	if err != nil {
 		return User{}, err
 	}
 

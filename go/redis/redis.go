@@ -32,7 +32,7 @@ func NewCache[T any](client Client, expiration time.Duration) *Cache[T] {
 func NewClient(ctx context.Context) *Client {
 	client := redis.NewClient(&redis.Options{
 		// Password:     pass,
-		Addr:         "192.168.0.12:6379",
+		Addr:         "192.168.0.11:6379",
 		DB:           0,
 		PoolSize:     100,
 		MinIdleConns: 30,
