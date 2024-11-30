@@ -516,14 +516,11 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	log.Println("debug 3")
 
 	tags := []Tag{}
-	// if t, ok := livestreamTagsCache.Load(livestreamModel.ID); ok {
-	// tags = t.([]Tag)
-	// } else {
-	if err := tx.SelectContext(ctx, &tags, "SELECT * FROM tags WHERE id IN (SELECT tag_id FROM livestream_tags WHERE livestream_id = ?)", livestreamModel.ID); err != nil {
-		return Livestream{}, err
+	if t, ok := livestreamTagsCache.Load(livestreamModel.ID); ok {
+		tags = t.([]Tag)
+	} else {
+		livestreamTagsCache.Store(livestreamModel.ID, tags)
 	}
-	// livestreamTagsCache.Store(livestreamModel.ID, tags)
-	// }
 
 	log.Println("debug 4")
 
