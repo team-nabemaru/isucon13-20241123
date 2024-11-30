@@ -490,7 +490,7 @@ func getLivecommentReportsHandler(c echo.Context) error {
 }
 
 var (
-	livestreamTagsCache = sync.Map{}
+	livestreamTagsCache sync.Map
 )
 
 // q: この関数は何をしている? 詳細に教えてください
