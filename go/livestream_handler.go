@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/isucon/isucon13/webapp/go/redis"
@@ -471,6 +472,10 @@ func getLivecommentReportsHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, reports)
 }
 
+var (
+	livestreamTagsCache = sync.Map{}
+)
+
 // q: この関数は何をしている? 詳細に教えてください
 // a: ライブストリームの情報を取得しています。livestreamsテーブルからlivestream_idをもとにlivestreamModelを取得し、
 //
@@ -488,8 +493,13 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	}
 
 	tags := []Tag{}
-	if err := tx.SelectContext(ctx, &tags, "SELECT * FROM tags WHERE id IN (SELECT tag_id FROM livestream_tags WHERE livestream_id = ?)", livestreamModel.ID); err != nil {
-		return Livestream{}, err
+	if t, ok := livestreamTagsCache.Load(livestreamModel.ID); ok {
+		tags = t.([]Tag)
+	} else {
+		if err := tx.SelectContext(ctx, &tags, "SELECT * FROM tags WHERE id IN (SELECT tag_id FROM livestream_tags WHERE livestream_id = ?)", livestreamModel.ID); err != nil {
+			return Livestream{}, err
+		}
+		livestreamTagsCache.Store(livestreamModel.ID, tags)
 	}
 
 	livestream := Livestream{
