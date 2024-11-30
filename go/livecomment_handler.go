@@ -389,7 +389,7 @@ func moderateHandler(c echo.Context) error {
 	}
 
 	// NGワードにヒットする過去の投稿も全削除する
-	query := "DELETE FROM livecomments WHERE id = ? AND livestream_id = ? AND ("
+	query := "DELETE FROM livecomments WHERE livestream_id = ? AND livestream_id = ? AND ("
 	args := []interface{}{livestreamID}
 
 	for i, ngword := range ngwords {
