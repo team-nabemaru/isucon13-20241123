@@ -131,43 +131,44 @@ func initializeHandler(c echo.Context) error {
 	}
 
 	c.Request().Header.Add("Content-Type", "application/json;charset=utf-8")
-
 	go func() {
 		if _, err := http.Get("http://192.168.0.15:9000/api/group/collect"); err != nil {
 			log.Printf("failed to communicate with pprotein: %v", err)
 		}
 	}()
 
-	userRepository := redis.NewRedisRepository[UserModel](dbConn, *redisClient)
-	go func() {
-		for {
-			var users []UserModel
-			err := dbConn.SelectContext(c.Request().Context(), &users, "SELECT * FROM users")
-			if err != nil {
-				log.Print(err)
-				time.Sleep(10 * time.Second)
-				continue
-			}
-
-			userMap := make(map[string]interface{}, len(users))
-			for _, u := range users {
-				cacheKey := fmt.Sprintf("%s:%s:%v", "users", "id", u.ID)
-				userBytes, err := json.Marshal(u)
+	if os.Hostname() == "ip-192-168-0-11" {
+		userRepository := redis.NewRedisRepository[UserModel](dbConn, *redisClient)
+		go func() {
+			for {
+				var users []UserModel
+				err := dbConn.SelectContext(c.Request().Context(), &users, "SELECT * FROM users")
 				if err != nil {
 					log.Print(err)
 					time.Sleep(10 * time.Second)
 					continue
 				}
-				userMap[cacheKey] = userBytes
-			}
-			err = userRepository.Cache.Client.MSet(context.Background(), userMap)
-			if err != nil {
-				log.Print(err)
-			}
 
-			time.Sleep(10 * time.Second)
-		}
-	}()
+				userMap := make(map[string]interface{}, len(users))
+				for _, u := range users {
+					cacheKey := fmt.Sprintf("%s:%s:%v", "users", "id", u.ID)
+					userBytes, err := json.Marshal(u)
+					if err != nil {
+						log.Print(err)
+						time.Sleep(10 * time.Second)
+						continue
+					}
+					userMap[cacheKey] = userBytes
+				}
+				err = userRepository.Cache.Client.MSet(context.Background(), userMap)
+				if err != nil {
+					log.Print(err)
+				}
+
+				time.Sleep(10 * time.Second)
+			}
+		}()
+	}
 
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "golang",
