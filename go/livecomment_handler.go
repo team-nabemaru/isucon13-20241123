@@ -360,7 +360,7 @@ func moderateHandler(c echo.Context) error {
 	// 配信者自身の配信に対するmoderateなのかを検証
 	// var ownedLivestreams []LivestreamModel
 	var ownedLivestreams int
-	if err := tx.GetContext(ctx, &ownedLivestreams, "SELECT COUNT(1) FROM livestreams WHERE id = ? AND user_id = ?", livestreamID, userID); err != nil {
+	if err := tx.GetContext(ctx, &ownedLivestreams, "SELECT EXISTS(SELECT 1 FROM livestreams WHERE id = ? AND user_id = ?) AS has_rows", livestreamID, userID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 	}
 	if ownedLivestreams == 0 {
