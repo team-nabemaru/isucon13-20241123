@@ -155,6 +155,7 @@ func initializeHandler(c echo.Context) error {
 				userBytes, err := json.Marshal(u)
 				if err != nil {
 					log.Print(err)
+					time.Sleep(10 * time.Second)
 					continue
 				}
 				userMap[cacheKey] = userBytes
