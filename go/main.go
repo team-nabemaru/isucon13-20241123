@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -115,6 +116,10 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
+	cacheLock.Lock()
+	livestreamTagsCache = sync.Map{}
+	cacheLock.Unlock()
+
 	redisClient = redis.NewClient(c.Request().Context())
 	if err := redisClient.FlushDB(); err != nil {
 		c.Logger().Errorf("failed to flush redis: %v", err)
