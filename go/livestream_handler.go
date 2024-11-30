@@ -503,11 +503,14 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	if err != nil {
 		return Livestream{}, err
 	}
+	log.Println("debug 1")
 
 	owner, err := fillUserResponse(ctx, tx, ownerModel)
 	if err != nil {
 		return Livestream{}, err
 	}
+
+	log.Println("debug 2")
 
 	tags := []Tag{}
 	if t, ok := livestreamTagsCache.Load(livestreamModel.ID); ok {
@@ -518,6 +521,8 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 		}
 		livestreamTagsCache.Store(livestreamModel.ID, tags)
 	}
+
+	log.Println("debug 3")
 
 	livestream := Livestream{
 		ID:           livestreamModel.ID,
