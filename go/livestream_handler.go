@@ -525,7 +525,7 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	// livestreamTagsCache.Store(livestreamModel.ID, tags)
 	// }
 
-	log.Panicln("debug 4")
+	log.Println("debug 4")
 
 	livestream := Livestream{
 		ID:           livestreamModel.ID,
