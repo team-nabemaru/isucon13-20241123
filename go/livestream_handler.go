@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -183,15 +184,29 @@ func searchLivestreamsHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	var livestreamModels []*LivestreamModel
-	if c.QueryParam("tag") != "" {
+	if keyTagName != "" {
 		// タグによる取得
 
-		query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (SELECT livestream_id FROM livestream_tags WHERE tag_id IN (SELECT id FROM tags WHERE name = ?)) ORDER BY id DESC", keyTagName)
+		cache := redis.NewCache[[]*LivestreamModel](*redisClient, time.Second*10)
+		cacheKey := fmt.Sprintf("tag:%s", keyTagName)
+
+		livestreamModels, err = cache.GetOrSet(ctx, cacheKey, func(ctx context.Context) ([]*LivestreamModel, error) {
+			var livestreamModels []*LivestreamModel
+			query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (SELECT livestream_id FROM livestream_tags WHERE tag_id IN (SELECT id FROM tags WHERE name = ?)) ORDER BY id DESC", keyTagName)
+			if err != nil {
+				log.Println("failed to construct IN query: ", err)
+				return nil, err
+			}
+			if err := tx.SelectContext(ctx, &livestreamModels, query, params...); err != nil {
+				log.Println("failed to get livestreams: ", err)
+				return nil, err
+			}
+
+			return livestreamModels, nil
+		})
+
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
-		}
-		if err := tx.SelectContext(ctx, &livestreamModels, query, params...); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get or set cache: "+err.Error())
 		}
 	} else {
 		// 検索条件なし
