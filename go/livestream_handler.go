@@ -500,8 +500,11 @@ var (
 func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel LivestreamModel) (Livestream, error) {
 	log.Println("debug 1")
 	userRepository := redis.NewRedisRepository[UserModel](tx, *redisClient)
+	log.Println("debug 1.1")
 	ownerModel, err := userRepository.GetById(ctx, strconv.FormatInt(livestreamModel.UserID, 10), "users")
+	log.Println("debug 1.2")
 	if err != nil {
+		log.Println("failed to get user: ", err)
 		return Livestream{}, err
 	}
 	log.Println("debug 2")
