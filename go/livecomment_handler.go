@@ -358,11 +358,12 @@ func moderateHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	// 配信者自身の配信に対するmoderateなのかを検証
-	var ownedLivestreams []LivestreamModel
-	if err := tx.SelectContext(ctx, &ownedLivestreams, "SELECT * FROM livestreams WHERE id = ? AND user_id = ?", livestreamID, userID); err != nil {
+	// var ownedLivestreams []LivestreamModel
+	var ownedLivestreams int
+	if err := tx.SelectContext(ctx, &ownedLivestreams, "SELECT COUNT(1) FROM livestreams WHERE id = ? AND user_id = ?", livestreamID, userID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 	}
-	if len(ownedLivestreams) == 0 {
+	if ownedLivestreams == 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, "A streamer can't moderate livestreams that other streamers own")
 	}
 
