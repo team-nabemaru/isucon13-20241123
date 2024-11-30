@@ -6,8 +6,7 @@ import (
 	"log"
 	"time"
 
-	"encoding/json"
-
+	"github.com/goccy/go-json"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/singleflight"
 )
