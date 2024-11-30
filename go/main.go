@@ -116,11 +116,7 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
-	cacheLock.Lock()
-	livestreamTagsCache = sync.Map{}
-	cacheLock.Unlock()
 
-	redisClient = redis.NewClient(c.Request().Context())
 	if err := redisClient.FlushDB(); err != nil {
 		c.Logger().Errorf("failed to flush redis: %v", err)
 	}
@@ -259,6 +255,12 @@ func main() {
 		os.Exit(1)
 	}
 	powerDNSSubdomainAddress = subdomainAddr
+
+	cacheLock.Lock()
+	livestreamTagsCache = sync.Map{}
+	cacheLock.Unlock()
+
+	redisClient = redis.NewClient(context.Background())
 
 	// HTTPサーバ起動
 	listenAddr := net.JoinHostPort("", strconv.Itoa(listenPort))
