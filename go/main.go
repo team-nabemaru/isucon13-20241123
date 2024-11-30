@@ -4,6 +4,8 @@ package main
 // sqlx的な参考: https://jmoiron.github.io/sqlx/
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -11,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/isucon/isucon13/webapp/go/redis"
@@ -126,6 +129,36 @@ func initializeHandler(c echo.Context) error {
 	go func() {
 		if _, err := http.Get("http://192.168.0.15:9000/api/group/collect"); err != nil {
 			log.Printf("failed to communicate with pprotein: %v", err)
+		}
+	}()
+
+	userRepository := redis.NewRedisRepository[UserModel](dbConn, *redisClient)
+	go func() {
+		for {
+			var users []UserModel
+			err := dbConn.SelectContext(c.Request().Context(), &users, "SELECT * FROM users")
+			if err != nil {
+				log.Print(err)
+				time.Sleep(5 * time.Second)
+				continue
+			}
+
+			userMap := make(map[string]interface{}, len(users))
+			for _, u := range users {
+				cacheKey := fmt.Sprintf("%s:%s:%v", "users", "id", u.ID)
+				userBytes, err := json.Marshal(u)
+				if err != nil {
+					log.Print(err)
+					continue
+				}
+				userMap[cacheKey] = userBytes
+			}
+			err = userRepository.Cache.Client.MSet(context.Background(), userMap)
+			if err != nil {
+				log.Print(err)
+			}
+
+			time.Sleep(5 * time.Second)
 		}
 	}()
 

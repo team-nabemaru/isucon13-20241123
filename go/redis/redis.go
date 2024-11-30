@@ -16,14 +16,14 @@ type Client struct {
 }
 
 type Cache[T any] struct {
-	client     Client
+	Client     Client
 	expiration time.Duration
 	sfg        *singleflight.Group
 }
 
 func NewCache[T any](client Client, expiration time.Duration) *Cache[T] {
 	return &Cache[T]{
-		client:     client,
+		Client:     client,
 		expiration: expiration,
 		sfg:        &singleflight.Group{},
 	}
@@ -57,7 +57,7 @@ func (c *Cache[T]) GetOrSet(
 	// singleflightでリクエストをまとめる
 	res, err, _ := c.sfg.Do(key, func() (any, error) {
 		// キャッシュから取得
-		bytes, exist, err := c.client.Get(ctx, key)
+		bytes, exist, err := c.Client.Get(ctx, key)
 		if err != nil {
 			log.Println(err.Error())
 		}
@@ -74,7 +74,7 @@ func (c *Cache[T]) GetOrSet(
 			return nil, err
 		}
 		// キャッシュに保存
-		err = c.client.Set(ctx, key, bytes, c.expiration)
+		err = c.Client.Set(ctx, key, bytes, c.expiration)
 		if err != nil {
 			log.Println(err.Error())
 		}

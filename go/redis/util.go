@@ -14,7 +14,7 @@ type db interface {
 
 type redisRepository[T any] struct {
 	db    db
-	cache *Cache[T]
+	Cache *Cache[T]
 }
 
 func NewRedisRepository[T any](
@@ -23,7 +23,7 @@ func NewRedisRepository[T any](
 ) *redisRepository[T] {
 	return &redisRepository[T]{
 		db: db,
-		cache: NewCache[T](
+		Cache: NewCache[T](
 			cacheClient,
 			time.Minute,
 		),
@@ -39,7 +39,7 @@ func (r *redisRepository[T]) GetByColumn(
 ) (T, error) {
 	cacheKey := fmt.Sprintf("%s:%s:%s", tableName, columnName, columnValue) // columnNameとcolumnValueでキャッシュキーを生成
 
-	return r.cache.GetOrSet(
+	return r.Cache.GetOrSet(
 		ctx, cacheKey, func(ctx context.Context) (T, error) {
 			var result T
 			dest := any(&result)
