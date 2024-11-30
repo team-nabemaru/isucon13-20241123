@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/goccy/go-json"
 
 	"github.com/isucon/isucon13/webapp/go/redis"
 	"github.com/jmoiron/sqlx"
