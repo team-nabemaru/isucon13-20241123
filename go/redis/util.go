@@ -5,17 +5,20 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/jmoiron/sqlx"
 )
 
+type db interface {
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+}
+
 type redisRepository[T any] struct {
-	db    *sqlx.Tx
+	db    db
 	cache *Cache[T]
 }
 
 func NewRedisRepository[T any](
-	db *sqlx.Tx,
+	db db,
 	cacheClient Client,
 ) *redisRepository[T] {
 	return &redisRepository[T]{
