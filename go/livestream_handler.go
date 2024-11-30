@@ -499,15 +499,19 @@ var (
 //	そのlivestreamModelをもとにLivestreamを作成しています。Livestreamには、オーナー情報、タグ情報が含まれています。
 func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel LivestreamModel) (Livestream, error) {
 	userRepository := redis.NewRedisRepository[UserModel](tx, *redisClient)
+	log.Panicln("debug 1")
 	ownerModel, err := userRepository.GetById(ctx, strconv.FormatInt(livestreamModel.UserID, 10), "users")
 	if err != nil {
 		return Livestream{}, err
 	}
+	log.Panicln("debug 2")
 
 	owner, err := fillUserResponse(ctx, tx, ownerModel)
 	if err != nil {
 		return Livestream{}, err
 	}
+
+	log.Panicln("debug 3")
 
 	tags := []Tag{}
 	// if t, ok := livestreamTagsCache.Load(livestreamModel.ID); ok {
@@ -518,6 +522,8 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	}
 	// livestreamTagsCache.Store(livestreamModel.ID, tags)
 	// }
+
+	log.Panicln("debug 4")
 
 	livestream := Livestream{
 		ID:           livestreamModel.ID,
