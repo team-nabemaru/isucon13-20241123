@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/goccy/go-json"
+	"encoding/json"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo-contrib/session"

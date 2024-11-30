@@ -4,7 +4,7 @@ go 1.23.3
 
 require (
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/goccy/go-json v0.10.3
+	encoding/json v0.10.3
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/sessions v1.2.2
 	github.com/jmoiron/sqlx v1.3.5
