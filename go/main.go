@@ -145,7 +145,7 @@ func initializeHandler(c echo.Context) error {
 			err := dbConn.SelectContext(c.Request().Context(), &users, "SELECT * FROM users")
 			if err != nil {
 				log.Print(err)
-				time.Sleep(5 * time.Second)
+				time.Sleep(10 * time.Second)
 				continue
 			}
 
@@ -164,7 +164,7 @@ func initializeHandler(c echo.Context) error {
 				log.Print(err)
 			}
 
-			time.Sleep(5 * time.Second)
+			time.Sleep(10 * time.Second)
 		}
 	}()
 
