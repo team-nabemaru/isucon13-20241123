@@ -137,7 +137,8 @@ func initializeHandler(c echo.Context) error {
 		}
 	}()
 
-	if os.Hostname() == "ip-192-168-0-11" {
+	hostname, _ := os.Hostname()
+	if hostname == "ip-192-168-0-11" {
 		userRepository := redis.NewRedisRepository[UserModel](dbConn, *redisClient)
 		go func() {
 			for {
