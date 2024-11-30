@@ -159,6 +159,7 @@ func reserveLivestreamHandler(c echo.Context) error {
 		}); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert livestream tag: "+err.Error())
 		}
+		livestreamTagsCache.Delete(livestreamID)
 	}
 
 	livestream, err := fillLivestreamResponse(ctx, tx, *livestreamModel)
