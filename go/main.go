@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/goccy/go-json"
 	"github.com/isucon/isucon13/webapp/go/redis"
 	"github.com/jmoiron/sqlx"
 	"github.com/kaz/pprotein/integration/echov4"
@@ -194,9 +195,25 @@ func initializeHandler(c echo.Context) error {
 	})
 }
 
+var echoDefaultJSONSerializer = echo.DefaultJSONSerializer{}
+
+type MyJSONSerializer struct{}
+
+func (s MyJSONSerializer) Serialize(c echo.Context, i interface{}, indent string) error {
+	enc := json.NewEncoder(c.Response())
+	if indent != "" {
+		enc.SetIndent("", indent)
+	}
+	return enc.Encode(i)
+}
+func (s MyJSONSerializer) Deserialize(c echo.Context, i interface{}) error {
+	return echoDefaultJSONSerializer.Deserialize(c, i)
+}
+
 func main() {
 	e := echo.New()
 	e.Debug = true
+	e.JSONSerializer = MyJSONSerializer{}
 	e.Logger.SetLevel(echolog.DEBUG)
 	e.Use(middleware.Logger())
 	cookieStore := sessions.NewCookieStore(secret)
