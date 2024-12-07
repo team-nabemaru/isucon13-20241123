@@ -40,6 +40,7 @@ var (
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 	redisClient              *redis.Client
 
+	cacheLock           = sync.Mutex{}
 	livestreamTagsCache sync.Map
 )
 
