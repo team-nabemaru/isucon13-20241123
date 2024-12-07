@@ -154,18 +154,32 @@ func reserveLivestreamHandler(c echo.Context) error {
 
 	// タグ追加
 	if len(req.Tags) != 0 {
+		tags := make([]Tag, len(req.Tags))
 		query := `INSERT INTO livestream_tags (livestream_id, tag_id) VALUES `
 		for i, tagID := range req.Tags {
 			if i != 0 {
 				query += `, `
 			}
 			query += fmt.Sprintf("(%d, %d)", livestreamID, tagID)
+			tag, err := getTagById(ctx, tx, tagID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get tag: "+err.Error())
+			}
+			tags[i] = Tag{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+		}
+
+		_, err := tx.ExecContext(ctx, query)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert livestream tag: "+err.Error())
 		}
 
 		if _, err := tx.ExecContext(ctx, query); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert livestream tag: "+err.Error())
 		}
-		livestreamTagsCache.Delete(livestreamID)
+		livestreamTagsCache.Store(livestreamID, tags)
 	}
 
 	livestream, err := fillLivestreamResponse(ctx, tx, *livestreamModel)
