@@ -44,6 +44,7 @@ var (
 	usersByNameCache    sync.Map
 	themeModelCache     sync.Map
 	iconHashCache       sync.Map
+	imageCache          sync.Map
 )
 
 func init() {
@@ -168,6 +169,7 @@ func initializeHandler(c echo.Context) error {
 	usersByNameCache = sync.Map{}
 	themeModelCache = sync.Map{}
 	iconHashCache = sync.Map{}
+	imageCache = sync.Map{}
 	cacheLock.Unlock()
 
 	return c.JSON(http.StatusOK, InitializeResponse{
