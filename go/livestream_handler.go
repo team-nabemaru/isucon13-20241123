@@ -294,6 +294,9 @@ func getUserLivestreamsHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	user, err := getUserByName(ctx, tx, username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusNotFound, "user not found")
+	}
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}

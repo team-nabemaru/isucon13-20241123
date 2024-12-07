@@ -95,6 +95,9 @@ func getIconHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	user, err := getUserByName(ctx, tx, username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusNotFound, "not found user that has the given username")
+	}
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
@@ -180,6 +183,9 @@ func getMeHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	userModel, err := getUserById(ctx, tx, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusNotFound, "not found user that has the userid in session")
+	}
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
@@ -241,6 +247,9 @@ func registerHandler(c echo.Context) error {
 
 	userModel.ID = userID
 
+	usersCache.Store(userID, userModel)
+	usersByNameCache.Store(userModel.Name, userModel)
+
 	themeModel := ThemeModel{
 		UserID:   userID,
 		DarkMode: req.Theme.DarkMode,
@@ -283,6 +292,9 @@ func loginHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	userModel, err := getUserByName(ctx, tx, req.Username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "invalid username or password")
+	}
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
@@ -343,6 +355,9 @@ func getUserHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	userModel, err := getUserByName(ctx, tx, username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusNotFound, "not found user that has the given username")
+	}
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}

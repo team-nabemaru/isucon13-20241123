@@ -80,6 +80,9 @@ func getUserStatisticsHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	user, err := getUserByName(ctx, tx, username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusBadRequest, "not found user that has the given username")
+	}
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}

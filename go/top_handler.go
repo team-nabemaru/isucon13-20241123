@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -72,6 +74,9 @@ func getStreamerThemeHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	userModel, err := getUserByName(ctx, tx, username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusNotFound, "not found user that has the given username")
+	}
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
