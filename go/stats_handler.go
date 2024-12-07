@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -120,9 +119,6 @@ func getUserStatisticsHandler(c echo.Context) error {
 	var rank int64 = 1
 	for i := len(ranking) - 1; i >= 0; i-- {
 		entry := ranking[i]
-		if username == "suzukitsubasa0" {
-			log.Println("rrrrrranking", username, entry.Username, entry.Score, rank)
-		}
 		if entry.Username == username {
 			break
 		}
