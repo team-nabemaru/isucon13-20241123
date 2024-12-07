@@ -131,8 +131,10 @@ GROUP BY users.id`
 	var rank int64 = 1
 	for i := len(ranking) - 1; i >= 0; i-- {
 		entry := ranking[i]
+		if username == "suzukitsubasa0" {
+			log.Println("rrrrrranking", username, entry.Username, entry.Score, rank)
+		}
 		if entry.Username == username {
-			log.Printf("ranking_score: %s: %v", username, entry.Score)
 			break
 		}
 		rank++
