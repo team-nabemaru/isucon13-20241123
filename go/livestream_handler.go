@@ -206,7 +206,6 @@ func searchLivestreamsHandler(c echo.Context) error {
 	if keyTagName != "" {
 		// タグによる取得
 
-		var livestreamModels []*LivestreamModel
 		query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (SELECT livestream_id FROM livestream_tags WHERE tag_id IN (SELECT id FROM tags WHERE name = ?)) ORDER BY id DESC", keyTagName)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get or set cache: "+err.Error())
