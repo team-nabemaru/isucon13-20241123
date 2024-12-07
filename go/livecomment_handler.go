@@ -190,10 +190,12 @@ func postLivecommentHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	livestreamModel, err := getLivestream(ctx, tx, livestreamID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return echo.NewHTTPError(http.StatusNotFound, "livestream not found")
-	} else {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestream: "+err.Error())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return echo.NewHTTPError(http.StatusNotFound, "livestream not found")
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestream: "+err.Error())
+		}
 	}
 
 	// スパム判定
