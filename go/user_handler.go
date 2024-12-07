@@ -6,14 +6,12 @@ import (
 	"errors"
 	"net/http"
 	"os/exec"
-	"strconv"
 	"time"
 
 	"github.com/goccy/go-json"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
-	"github.com/isucon/isucon13/webapp/go/redis"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -182,14 +180,21 @@ func getMeHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	userRepository := redis.NewRedisRepository[UserModel](tx, *redisClient)
-	userModel, err := userRepository.GetById(ctx, strconv.FormatInt(userID, 10), "users")
+	var userModel UserModel
+	cacheedUserModel, ok := usersCache.Load(userID)
+	if ok {
+		userModel = cacheedUserModel.(UserModel)
+	} else {
+		err := tx.GetContext(ctx, &userModel, "SELECT * FROM users WHERE id = ?", userID)
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return echo.NewHTTPError(http.StatusNotFound, "not found user that has the userid in session")
-	}
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+		if errors.Is(err, sql.ErrNoRows) {
+			return echo.NewHTTPError(http.StatusNotFound, "not found user that has the userid in session")
+		}
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+		}
+
+		usersCache.Store(userID, userModel)
 	}
 
 	user, err := fillUserResponse(ctx, tx, userModel)
