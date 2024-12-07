@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os/exec"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -85,10 +84,6 @@ type PostIconRequest struct {
 type PostIconResponse struct {
 	ID int64 `json:"id"`
 }
-
-var (
-	cacheLock = sync.Mutex{}
-)
 
 func getIconHandler(c echo.Context) error {
 	ctx := c.Request().Context()

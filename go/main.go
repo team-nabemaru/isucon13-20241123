@@ -39,6 +39,8 @@ var (
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 	redisClient              *redis.Client
+
+	livestreamTagsCache sync.Map
 )
 
 func init() {
@@ -167,6 +169,10 @@ func initializeHandler(c echo.Context) error {
 		}()
 	}
 
+	cacheLock.Lock()
+	livestreamTagsCache = sync.Map{}
+	cacheLock.Unlock()
+
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "golang",
 	})
@@ -255,10 +261,6 @@ func main() {
 		os.Exit(1)
 	}
 	powerDNSSubdomainAddress = subdomainAddr
-
-	cacheLock.Lock()
-	livestreamTagsCache = sync.Map{}
-	cacheLock.Unlock()
 
 	redisClient = redis.NewClient(context.Background())
 

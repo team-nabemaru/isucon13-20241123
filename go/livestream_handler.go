@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -488,10 +487,6 @@ func getLivecommentReportsHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, reports)
 }
-
-var (
-	livestreamTagsCache sync.Map
-)
 
 // q: この関数は何をしている? 詳細に教えてください
 // a: ライブストリームの情報を取得しています。livestreamsテーブルからlivestream_idをもとにlivestreamModelを取得し、
