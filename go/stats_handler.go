@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -123,12 +124,15 @@ GROUP BY users.id`
 			Score:    score,
 		})
 	}
+
+	log.Printf("ranking_count: %s: %v", username, len(ranking))
 	sort.Sort(ranking)
 
 	var rank int64 = 1
 	for i := len(ranking) - 1; i >= 0; i-- {
 		entry := ranking[i]
 		if entry.Username == username {
+			log.Printf("ranking_score: %s: %v", username, entry.Score)
 			break
 		}
 		rank++
