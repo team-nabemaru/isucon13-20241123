@@ -85,8 +85,18 @@ type PostIconResponse struct {
 
 func getIconHandler(c echo.Context) error {
 	ctx := c.Request().Context()
-
 	username := c.Param("username")
+
+	extectedEtag := c.Request().Header.Get("If-None-Match")
+	iconHash, _ := iconHashCache.Load(username)
+
+	if iconHash == extectedEtag {
+		return c.NoContent(http.StatusNotModified)
+	}
+
+	if cachedImage, ok := imageCache.Load(username); ok {
+		return c.Blob(http.StatusOK, "image/jpeg", cachedImage.([]byte))
+	}
 
 	tx, err := dbConn.BeginTxx(ctx, nil)
 	if err != nil {
@@ -103,19 +113,14 @@ func getIconHandler(c echo.Context) error {
 	}
 
 	var image []byte
-	cachedImage, ok := imageCache.Load(user.ID)
-	if ok {
-		image = cachedImage.([]byte)
-	} else {
-		if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return c.File(fallbackImage)
-			} else {
-				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
-			}
+	if err := dbConn.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.File(fallbackImage)
 		}
-		imageCache.Store(user.ID, image)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
 	}
+
+	imageCache.Store(username, image)
 
 	return c.Blob(http.StatusOK, "image/jpeg", image)
 }
@@ -132,6 +137,7 @@ func postIconHandler(c echo.Context) error {
 	sess, _ := session.Get(defaultSessionIDKey, c)
 	// existence already checked
 	userID := sess.Values[defaultUserIDKey].(int64)
+	userName := sess.Values[defaultUsernameKey].(string)
 
 	var req *PostIconRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
@@ -162,7 +168,9 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
-	iconHashCache.Delete(userID)
+	imageCache.Store(userID, req.Image)
+
+	iconHashCache.Delete(userName)
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
@@ -419,7 +427,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	}
 
 	var iconHash string
-	cacheedIconHash, ok := iconHashCache.Load(userModel.ID)
+	cacheedIconHash, ok := iconHashCache.Load(userModel.Name)
 	if ok {
 		iconHash = cacheedIconHash.(string)
 	} else {
@@ -429,7 +437,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 				return User{}, err
 			}
 		}
-		iconHashCache.Store(userModel.ID, iconHash)
+		iconHashCache.Store(userModel.Name, iconHash)
 	}
 
 	if iconHash == "" {
