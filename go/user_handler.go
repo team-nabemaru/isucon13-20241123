@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -95,7 +96,7 @@ func getIconHandler(c echo.Context) error {
 	}
 
 	if cachedImage, ok := imageCache.Load(username); ok {
-		return c.Blob(http.StatusOK, "image/jpeg", cachedImage.([]byte))
+		return c.Stream(http.StatusOK, "image/jpeg", bytes.NewReader(cachedImage.([]byte)))
 	}
 
 	tx, err := dbConn.BeginTxx(ctx, nil)
@@ -122,7 +123,8 @@ func getIconHandler(c echo.Context) error {
 
 	imageCache.Store(username, image)
 
-	return c.Blob(http.StatusOK, "image/jpeg", image)
+	return c.Stream(http.StatusOK, "image/jpeg", bytes.NewReader(image))
+
 }
 
 func postIconHandler(c echo.Context) error {
