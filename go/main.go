@@ -220,9 +220,9 @@ func (s MyJSONSerializer) Deserialize(c echo.Context, i interface{}) error {
 
 func main() {
 	e := echo.New()
-	e.Debug = true
+	e.Debug = false
 	e.JSONSerializer = MyJSONSerializer{}
-	e.Logger.SetLevel(echolog.DEBUG)
+	e.Logger.SetLevel(echolog.OFF)
 	e.Use(middleware.Logger())
 	cookieStore := sessions.NewCookieStore(secret)
 	cookieStore.Options.Domain = "*.t.isucon.pw"
