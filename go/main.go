@@ -37,16 +37,17 @@ var (
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
 
-	cacheLock           = sync.Mutex{}
-	livestreamTagsCache sync.Map
-	usersCache          sync.Map
-	usersByNameCache    sync.Map
-	themeModelCache     sync.Map
-	iconHashCache       sync.Map
-	imageCache          sync.Map
-	tagsCache           sync.Map
-	livestreamCache     sync.Map
-	reactionsCache      sync.Map
+	cacheLock                   = sync.Mutex{}
+	livestreamTagsCache         sync.Map
+	usersCache                  sync.Map
+	usersByNameCache            sync.Map
+	themeModelCache             sync.Map
+	iconHashCache               sync.Map
+	imageCache                  sync.Map
+	tagsCache                   sync.Map
+	livestreamCache             sync.Map
+	livestreamByKeyTagNameCache sync.Map
+	reactionsCache              sync.Map
 )
 
 func init() {
@@ -185,6 +186,7 @@ func initializeHandler(c echo.Context) error {
 	imageCache = sync.Map{}
 	tagsCache = sync.Map{}
 	livestreamCache = sync.Map{}
+	livestreamByKeyTagNameCache = sync.Map{}
 	reactionsCache = sync.Map{}
 	cacheLock.Unlock()
 

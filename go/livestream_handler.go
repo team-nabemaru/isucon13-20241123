@@ -206,13 +206,26 @@ func searchLivestreamsHandler(c echo.Context) error {
 	if keyTagName != "" {
 		// タグによる取得
 
-		query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (SELECT livestream_id FROM livestream_tags WHERE tag_id IN (SELECT id FROM tags WHERE name = ?)) ORDER BY id DESC", keyTagName)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get or set cache: "+err.Error())
-		}
+		cachedLivestreamModels, ok := livestreamByKeyTagNameCache.Load(keyTagName)
+		if ok {
+			livestreamModels = cachedLivestreamModels.([]*LivestreamModel)
+		} else {
+			query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (SELECT livestream_id FROM livestream_tags WHERE tag_id IN (SELECT id FROM tags WHERE name = ?)) ORDER BY id DESC", keyTagName)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get or set cache: "+err.Error())
+			}
 
-		if err := tx.SelectContext(ctx, &livestreamModels, query, params...); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get or set cache: "+err.Error())
+			if err := tx.SelectContext(ctx, &livestreamModels, query, params...); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get or set cache: "+err.Error())
+			}
+
+			livestreamByKeyTagNameCache.Store(keyTagName, livestreamModels)
+
+			go func() {
+				// キャッシュの有効期限を設定
+				time.Sleep(10 * time.Minute)
+				livestreamByKeyTagNameCache.Delete(keyTagName)
+			}()
 		}
 	} else {
 		// 検索条件なし
