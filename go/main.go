@@ -47,7 +47,7 @@ var (
 	iconHashCache       sync.Map
 	imageCache          sync.Map
 	tagsCache           sync.Map
-	livestreamCache     sync.Map
+	reactionsCache      sync.Map
 )
 
 func init() {
@@ -189,7 +189,6 @@ func initializeHandler(c echo.Context) error {
 	iconHashCache = sync.Map{}
 	imageCache = sync.Map{}
 	tagsCache = sync.Map{}
-	livestreamCache = sync.Map{}
 	cacheLock.Unlock()
 
 	return c.JSON(http.StatusOK, InitializeResponse{
