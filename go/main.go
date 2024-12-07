@@ -41,6 +41,7 @@ var (
 	cacheLock           = sync.Mutex{}
 	livestreamTagsCache sync.Map
 	usersCache          sync.Map
+	usersByNameCache    sync.Map
 	themeModelCache     sync.Map
 	iconHashCache       sync.Map
 )
@@ -153,6 +154,7 @@ func initializeHandler(c echo.Context) error {
 
 				for _, user := range users {
 					usersCache.Store(user.ID, user)
+					usersByNameCache.Store(user.Name, user)
 				}
 
 				time.Sleep(10 * time.Second)
@@ -163,6 +165,7 @@ func initializeHandler(c echo.Context) error {
 	cacheLock.Lock()
 	livestreamTagsCache = sync.Map{}
 	usersCache = sync.Map{}
+	usersByNameCache = sync.Map{}
 	themeModelCache = sync.Map{}
 	iconHashCache = sync.Map{}
 	cacheLock.Unlock()

@@ -293,13 +293,9 @@ func getUserLivestreamsHandler(c echo.Context) error {
 	}
 	defer tx.Rollback()
 
-	var user UserModel
-	if err := tx.GetContext(ctx, &user, "SELECT * FROM users WHERE name = ?", username); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return echo.NewHTTPError(http.StatusNotFound, "user not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
-		}
+	user, err := getUserByName(ctx, tx, username)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
 	}
 
 	var livestreamModels []*LivestreamModel
@@ -494,19 +490,12 @@ func getLivecommentReportsHandler(c echo.Context) error {
 //
 //	そのlivestreamModelをもとにLivestreamを作成しています。Livestreamには、オーナー情報、タグ情報が含まれています。
 func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel LivestreamModel) (Livestream, error) {
-	ownerModel := UserModel{}
-	cachedOwnerModel, ok := usersCache.Load(livestreamModel.UserID)
-	if ok {
-		ownerModel = cachedOwnerModel.(UserModel)
-	} else {
-		err := tx.GetContext(ctx, &ownerModel, "SELECT * FROM users WHERE id = ?", livestreamModel.UserID)
-		if err != nil {
-			return Livestream{}, err
-		}
-		usersCache.Store(livestreamModel.UserID, ownerModel)
+	ownerModel, err := getUserById(ctx, tx, livestreamModel.UserID)
+	if err != nil {
+		return Livestream{}, err
 	}
 
-	owner, err := fillUserResponse(ctx, tx, ownerModel)
+	owner, err := fillUserResponse(ctx, tx, *ownerModel)
 	if err != nil {
 		return Livestream{}, err
 	}
