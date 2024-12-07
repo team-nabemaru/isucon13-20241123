@@ -191,6 +191,7 @@ func initializeHandler(c echo.Context) error {
 	imageCache = sync.Map{}
 	tagsCache = sync.Map{}
 	livestreamCache = sync.Map{}
+	reactionsCache = sync.Map{}
 	cacheLock.Unlock()
 
 	return c.JSON(http.StatusOK, InitializeResponse{
