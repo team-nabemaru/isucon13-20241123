@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -53,15 +54,28 @@ func getReactionsHandler(c echo.Context) error {
 	defer tx.Rollback()
 
 	// index
-	reactionModels := []ReactionModel{}
-	cachedReactions, ok := reactionsCache.Load(livestreamID)
-	if ok {
-		reactionModels = cachedReactions.([]ReactionModel)
-	} else {
-		if err := tx.SelectContext(ctx, &reactionModels, "SELECT * FROM reactions WHERE livestream_id = ? ORDER BY created_at DESC", livestreamID); err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "failed to get reactions")
+	// reactionModels := []ReactionModel{}
+	// cachedReactions, ok := reactionsCache.Load(livestreamID)
+	// if ok {
+	// 	reactionModels = cachedReactions.([]ReactionModel)
+	// } else {
+	// 	if err := tx.SelectContext(ctx, &reactionModels, "SELECT * FROM reactions WHERE livestream_id = ? ORDER BY created_at DESC", livestreamID); err != nil {
+	// 		return echo.NewHTTPError(http.StatusNotFound, "failed to get reactions")
+	// 	}
+	// 	reactionsCache.Store(livestreamID, reactionModels)
+	// }
+	query := "SELECT * FROM reactions WHERE livestream_id = ? ORDER BY created_at DESC"
+	if c.QueryParam("limit") != "" {
+		limit, err := strconv.Atoi(c.QueryParam("limit"))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "limit query parameter must be integer")
 		}
-		reactionsCache.Store(livestreamID, reactionModels)
+		query += fmt.Sprintf(" LIMIT %d", limit)
+	}
+
+	reactionModels := []ReactionModel{}
+	if err := tx.SelectContext(ctx, &reactionModels, query, livestreamID); err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "failed to get reactions")
 	}
 
 	// limit
