@@ -5,14 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/goccy/go-json"
 
-	"github.com/isucon/isucon13/webapp/go/redis"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -208,25 +206,13 @@ func searchLivestreamsHandler(c echo.Context) error {
 	if keyTagName != "" {
 		// タグによる取得
 
-		cache := redis.NewCache[[]*LivestreamModel](*redisClient, time.Second*10)
-		cacheKey := fmt.Sprintf("tag:%s", keyTagName)
-
-		livestreamModels, err = cache.GetOrSet(ctx, cacheKey, func(ctx context.Context) ([]*LivestreamModel, error) {
-			var livestreamModels []*LivestreamModel
-			query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (SELECT livestream_id FROM livestream_tags WHERE tag_id IN (SELECT id FROM tags WHERE name = ?)) ORDER BY id DESC", keyTagName)
-			if err != nil {
-				log.Println("failed to construct IN query: ", err)
-				return nil, err
-			}
-			if err := tx.SelectContext(ctx, &livestreamModels, query, params...); err != nil {
-				log.Println("failed to get livestreams: ", err)
-				return nil, err
-			}
-
-			return livestreamModels, nil
-		})
-
+		var livestreamModels []*LivestreamModel
+		query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (SELECT livestream_id FROM livestream_tags WHERE tag_id IN (SELECT id FROM tags WHERE name = ?)) ORDER BY id DESC", keyTagName)
 		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get or set cache: "+err.Error())
+		}
+
+		if err := tx.SelectContext(ctx, &livestreamModels, query, params...); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get or set cache: "+err.Error())
 		}
 	} else {
