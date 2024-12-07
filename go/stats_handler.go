@@ -88,38 +88,28 @@ func getUserStatisticsHandler(c echo.Context) error {
 	}
 
 	// ランク算出
-	// usersCache から users を取得
-	users := []UserModel{}
-	usersCache.Range(func(key, value interface{}) bool {
-		user := value.(UserModel)
-		users = append(users, user)
-		return true
-	})
-
 	var ranking UserRanking
-	for _, user := range users {
-		type TmpReactionTip struct {
-			TotalReactions int64 `db:"total_reactions"`
-			TotalTips      int64 `db:"total_tips"`
-		}
-		var tmpReactionTip TmpReactionTip
-		query := `
-SELECT COUNT(reactions.id) AS total_reactions, IFNULL(SUM(livecomments.tip), 0) AS total_tips
-FROM users
-INNER JOIN livestreams ON livestreams.user_id = users.id
-LEFT JOIN reactions ON reactions.livestream_id = livestreams.id
-LEFT JOIN livecomments ON livecomments.livestream_id = livestreams.id
-WHERE users.id = ?
-GROUP BY users.id`
-		if err := tx.GetContext(ctx, &tmpReactionTip, query, user.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions and tips: "+err.Error())
-		}
-		reactions := tmpReactionTip.TotalReactions
-		tips := tmpReactionTip.TotalTips
+	type TmpReactionTip struct {
+		TotalReactions int64  `db:"total_reactions"`
+		TotalTips      int64  `db:"total_tips"`
+		UserName       string `db:"user_name"`
+	}
+	var tmpReactionTips []*TmpReactionTip
+	query := `
+	SELECT COUNT(reactions.id) AS total_reactions, IFNULL(SUM(livecomments.tip), 0) AS total_tips, users.name AS user_name
+	FROM users
+	INNER JOIN livestreams ON livestreams.user_id = users.id
+	LEFT JOIN reactions ON reactions.livestream_id = livestreams.id
+	LEFT JOIN livecomments ON livecomments.livestream_id = livestreams.id
+	GROUP BY users.id`
+	if err := tx.SelectContext(ctx, &tmpReactionTips, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions and tips: "+err.Error())
+	}
 
-		score := reactions + tips
+	for _, tmp := range tmpReactionTips {
+		score := tmp.TotalReactions + tmp.TotalTips
 		ranking = append(ranking, UserRankingEntry{
-			Username: user.Name,
+			Username: tmp.UserName,
 			Score:    score,
 		})
 	}
@@ -136,7 +126,7 @@ GROUP BY users.id`
 
 	// リアクション数
 	var totalReactions int64
-	query := `SELECT COUNT(1) FROM users u 
+	query = `SELECT COUNT(1) FROM users u 
     INNER JOIN livestreams l ON l.user_id = u.id 
     INNER JOIN reactions r ON r.livestream_id = l.id
     WHERE u.name = ?
