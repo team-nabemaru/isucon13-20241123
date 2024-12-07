@@ -24,6 +24,7 @@ const (
 	defaultUserIDKey         = "USERID"
 	defaultUsernameKey       = "USERNAME"
 	bcryptDefaultCost        = bcrypt.MinCost
+	noContentImageHash       = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
 )
 
 var fallbackImage = "../img/NoImage.jpg"
@@ -90,7 +91,7 @@ func getIconHandler(c echo.Context) error {
 	extectedEtag := c.Request().Header.Get("If-None-Match")
 	iconHash, _ := iconHashCache.Load(username)
 
-	if iconHash == extectedEtag {
+	if extectedEtag != "" && iconHash == extectedEtag && noContentImageHash == iconHash {
 		return c.NoContent(http.StatusNotModified)
 	}
 
@@ -441,7 +442,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	}
 
 	if iconHash == "" {
-		iconHash = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
+		iconHash = noContentImageHash
 	}
 
 	user := User{
