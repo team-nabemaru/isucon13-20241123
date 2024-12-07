@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/isucon/isucon13/webapp/go/redis"
@@ -40,7 +39,6 @@ var (
 
 	cacheLock           = sync.Mutex{}
 	livestreamTagsCache sync.Map
-	usersCache          sync.Map
 )
 
 func init() {
@@ -135,32 +133,42 @@ func initializeHandler(c echo.Context) error {
 		}
 	}()
 
-	hostname, _ := os.Hostname()
-	if hostname == "ip-192-168-0-11" {
-		go func() {
-			context := context.Background()
+	// hostname, _ := os.Hostname()
+	// if hostname == "ip-192-168-0-11" {
+	// 	userRepository := redis.NewRedisRepository[UserModel](dbConn, *redisClient)
+	// 	go func() {
+	// 		for {
+	// 			var users []UserModel
+	// 			err := dbConn.SelectContext(c.Request().Context(), &users, "SELECT * FROM users")
+	// 			if err != nil {
+	// 				log.Print(err)
+	// 				time.Sleep(10 * time.Second)
+	// 				continue
+	// 			}
 
-			for {
-				var users []UserModel
-				err := dbConn.SelectContext(context, &users, "SELECT * FROM users")
-				if err != nil {
-					log.Println(err)
-					time.Sleep(10 * time.Second)
-					continue
-				}
+	// 			userMap := make(map[string]interface{}, len(users))
+	// 			for _, u := range users {
+	// 				cacheKey := fmt.Sprintf("%s:%s:%v", "users", "id", u.ID)
+	// 				userBytes, err := json.Marshal(u)
+	// 				if err != nil {
+	// 					log.Print(err)
+	// 					time.Sleep(10 * time.Second)
+	// 					continue
+	// 				}
+	// 				userMap[cacheKey] = userBytes
+	// 			}
+	// 			err = userRepository.Cache.Client.MSet(context.Background(), userMap)
+	// 			if err != nil {
+	// 				log.Print(err)
+	// 			}
 
-				for _, user := range users {
-					usersCache.Store(user.ID, user)
-				}
-
-				time.Sleep(10 * time.Second)
-			}
-		}()
-	}
+	// 			time.Sleep(10 * time.Second)
+	// 		}
+	// 	}()
+	// }
 
 	cacheLock.Lock()
 	livestreamTagsCache = sync.Map{}
-	usersCache = sync.Map{}
 	cacheLock.Unlock()
 
 	return c.JSON(http.StatusOK, InitializeResponse{
