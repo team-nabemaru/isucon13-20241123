@@ -154,22 +154,17 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 	}
 
-	type TmpLiveStatistics struct {
-		TotalTips         int64 `db:"total_tip"`
-		TotalLivecomments int64 `db:"total_live_comments"`
+	for _, livestream := range livestreams {
+		var livecomments []*LivecommentModel
+		if err := tx.SelectContext(ctx, &livecomments, "SELECT * FROM livecomments WHERE livestream_id = ?", livestream.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livecomments: "+err.Error())
+		}
+
+		for _, livecomment := range livecomments {
+			totalTip += livecomment.Tip
+			totalLivecomments++
+		}
 	}
-	var tmpLiveStatistics TmpLiveStatistics
-	if err := tx.SelectContext(ctx, &tmpLiveStatistics, `
-SELECT SUM(tip) AS total_tip, COUNT(1) AS total_live_comments
-FROM livecomments
-INNER JOIN livestreams ON livecomments.livestream_id = livestreams.id
-WHERE livestreams.user_id = ?
-GROUP BY livestreams.user_id
-`, user.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livecomments: "+err.Error())
-	}
-	totalLivecomments = tmpLiveStatistics.TotalLivecomments
-	totalTip = tmpLiveStatistics.TotalTips
 
 	// 合計視聴者数
 	var viewersCount int64
