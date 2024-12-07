@@ -160,7 +160,7 @@ func reserveLivestreamHandler(c echo.Context) error {
 		}); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert livestream tag: "+err.Error())
 		}
-		livestreamTagsCache.Delete(livestreamID)
+		// livestreamTagsCache.Delete(livestreamID)
 	}
 
 	livestream, err := fillLivestreamResponse(ctx, tx, *livestreamModel)
@@ -510,14 +510,17 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	}
 
 	tags := []Tag{}
-	if t, ok := livestreamTagsCache.Load(livestreamModel.ID); ok {
-		tags = t.([]Tag)
-	} else {
-		if err := tx.SelectContext(ctx, &tags, "SELECT * FROM tags WHERE id IN (SELECT tag_id FROM livestream_tags WHERE livestream_id = ?)", livestreamModel.ID); err != nil {
-			return Livestream{}, err
-		}
-		livestreamTagsCache.Store(livestreamModel.ID, tags)
+	if err := tx.SelectContext(ctx, &tags, "SELECT * FROM tags WHERE id IN (SELECT tag_id FROM livestream_tags WHERE livestream_id = ?)", livestreamModel.ID); err != nil {
+		return Livestream{}, err
 	}
+	// if t, ok := livestreamTagsCache.Load(livestreamModel.ID); ok {
+	// 	tags = t.([]Tag)
+	// } else {
+	// 	if err := tx.SelectContext(ctx, &tags, "SELECT * FROM tags WHERE id IN (SELECT tag_id FROM livestream_tags WHERE livestream_id = ?)", livestreamModel.ID); err != nil {
+	// 		return Livestream{}, err
+	// 	}
+	// 	livestreamTagsCache.Store(livestreamModel.ID, tags)
+	// }
 
 	livestream := Livestream{
 		ID:           livestreamModel.ID,
