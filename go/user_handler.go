@@ -260,9 +260,17 @@ func registerHandler(c echo.Context) error {
 		UserID:   userID,
 		DarkMode: req.Theme.DarkMode,
 	}
-	if _, err := tx.NamedExecContext(ctx, "INSERT INTO themes (user_id, dark_mode) VALUES(:user_id, :dark_mode)", themeModel); err != nil {
+	rs, err := tx.NamedExecContext(ctx, "INSERT INTO themes (user_id, dark_mode) VALUES(:user_id, :dark_mode)", themeModel)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert user theme: "+err.Error())
 	}
+
+	themeID, err := rs.LastInsertId()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get last inserted theme id: "+err.Error())
+	}
+	themeModel.ID = themeID
+	themeModelCache.Store(userID, themeModel)
 
 	if out, err := exec.Command("pdnsutil", "add-record", "t.isucon.pw", req.Name, "A", "0", powerDNSSubdomainAddress).CombinedOutput(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, string(out)+": "+err.Error())
@@ -405,21 +413,9 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
-	// themeRepository := redis.NewRedisRepository[ThemeModel](tx, *redisClient)
-	// themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
-	// if err != nil {
-	// 	return User{}, err
-	// }
-	var themeModel ThemeModel
-	cachedThemeModel, ok := themeModelCache.Load(userModel.ID)
-	if ok {
-		themeModel = cachedThemeModel.(ThemeModel)
-	} else {
-		err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID)
-		if err != nil {
-			return User{}, err
-		}
-		themeModelCache.Store(userModel.ID, themeModel)
+	themeModel, err := getThemeByUserId(ctx, tx, userModel.ID)
+	if err != nil {
+		return User{}, err
 	}
 
 	var iconHash string

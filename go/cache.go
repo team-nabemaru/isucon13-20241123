@@ -36,3 +36,18 @@ func getUserByName(ctx context.Context, tx db, name string) (*UserModel, error) 
 	}
 	return &ownerModel, nil
 }
+
+func getThemeByUserId(ctx context.Context, tx db, userId int64) (*ThemeModel, error) {
+	var themeModel ThemeModel
+	cachedThemeModel, ok := themeModelCache.Load(userId)
+	if ok {
+		themeModel = cachedThemeModel.(ThemeModel)
+	} else {
+		err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userId)
+		if err != nil {
+			return nil, err
+		}
+		themeModelCache.Store(userId, themeModel)
+	}
+	return &themeModel, nil
+}
