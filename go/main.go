@@ -17,7 +17,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/goccy/go-json"
-	"github.com/isucon/isucon13/webapp/go/redis"
 	"github.com/jmoiron/sqlx"
 	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/labstack/echo/v4"
@@ -37,7 +36,6 @@ var (
 	powerDNSSubdomainAddress string
 	dbConn                   *sqlx.DB
 	secret                   = []byte("isucon13_session_cookiestore_defaultsecret")
-	redisClient              *redis.Client
 
 	cacheLock           = sync.Mutex{}
 	livestreamTagsCache sync.Map
@@ -126,10 +124,6 @@ func connectDB(logger echo.Logger) (*sqlx.DB, error) {
 }
 
 func initializeHandler(c echo.Context) error {
-
-	if err := redisClient.FlushDB(); err != nil {
-		c.Logger().Errorf("failed to flush redis: %v", err)
-	}
 
 	if out, err := exec.Command("../sql/init.sh").CombinedOutput(); err != nil {
 		c.Logger().Warnf("init.sh failed with err=%s", string(out))
@@ -302,8 +296,6 @@ func main() {
 		os.Exit(1)
 	}
 	powerDNSSubdomainAddress = subdomainAddr
-
-	redisClient = redis.NewClient(context.Background())
 
 	// HTTPサーバ起動
 	listenAddr := net.JoinHostPort("", strconv.Itoa(listenPort))
