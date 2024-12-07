@@ -400,9 +400,13 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
-	themeRepository := redis.NewRedisRepository[ThemeModel](tx, *redisClient)
-	themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
-	if err != nil {
+	// themeRepository := redis.NewRedisRepository[ThemeModel](tx, *redisClient)
+	// themeModel, err := themeRepository.GetByUserId(ctx, strconv.FormatInt(userModel.ID, 10), "themes")
+	// if err != nil {
+	// 	return User{}, err
+	// }
+	var themeModel ThemeModel
+	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
 		return User{}, err
 	}
 

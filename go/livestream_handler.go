@@ -115,6 +115,7 @@ func reserveLivestreamHandler(c echo.Context) error {
 	}
 	for _, slot := range slots {
 		var count int
+		// Todo: cache
 		if err := tx.GetContext(ctx, &count, "SELECT slot FROM reservation_slots WHERE start_at = ? AND end_at = ?", slot.StartAt, slot.EndAt); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get reservation_slots: "+err.Error())
 		}
@@ -493,9 +494,13 @@ func getLivecommentReportsHandler(c echo.Context) error {
 //
 //	そのlivestreamModelをもとにLivestreamを作成しています。Livestreamには、オーナー情報、タグ情報が含まれています。
 func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel LivestreamModel) (Livestream, error) {
-	userRepository := redis.NewRedisRepository[UserModel](tx, *redisClient)
-	ownerModel, err := userRepository.GetById(ctx, strconv.FormatInt(livestreamModel.UserID, 10), "users")
-	if err != nil {
+	// userRepository := redis.NewRedisRepository[UserModel](tx, *redisClient)
+	// ownerModel, err := userRepository.GetById(ctx, strconv.FormatInt(livestreamModel.UserID, 10), "users")
+	// if err != nil {
+	// 	return Livestream{}, err
+	// }
+	var ownerModel UserModel
+	if err := tx.GetContext(ctx, &ownerModel, "SELECT * FROM users WHERE id = ?", livestreamModel.UserID); err != nil {
 		return Livestream{}, err
 	}
 
