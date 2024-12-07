@@ -101,7 +101,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 	LEFT JOIN livestreams ON livestreams.user_id = users.id
 	LEFT JOIN reactions ON reactions.livestream_id = livestreams.id
 	LEFT JOIN livecomments ON livecomments.livestream_id = livestreams.id
-	GROUP BY users.id FOR SHARE`
+	GROUP BY users.id FOR UPDATE`
 	if err := tx.SelectContext(ctx, &tmpReactionTips, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions and tips: "+err.Error())
 	}
