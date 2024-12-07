@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/goccy/go-json"
@@ -143,21 +142,15 @@ func initializeHandler(c echo.Context) error {
 		go func() {
 			context := context.Background()
 
-			for {
-				var users []UserModel
-				err := dbConn.SelectContext(context, &users, "SELECT * FROM users")
-				if err != nil {
-					log.Println(err)
-					time.Sleep(10 * time.Second)
-					continue
-				}
+			var users []UserModel
+			err := dbConn.SelectContext(context, &users, "SELECT * FROM users")
+			if err != nil {
+				panic(err)
+			}
 
-				for _, user := range users {
-					usersCache.Store(user.ID, user)
-					usersByNameCache.Store(user.Name, user)
-				}
-
-				time.Sleep(10 * time.Second)
+			for _, user := range users {
+				usersCache.Store(user.ID, user)
+				usersByNameCache.Store(user.Name, user)
 			}
 		}()
 
