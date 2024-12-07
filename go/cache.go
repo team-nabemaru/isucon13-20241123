@@ -74,11 +74,10 @@ func getTagById(ctx context.Context, tx db, tagId int64) (*TagModel, error) {
 func getLivestream(ctx context.Context, tx db, livestreamID int) (*LivestreamModel, error) {
 	livestreamModel := LivestreamModel{}
 	livestream, ok := livestreamCache.Load(livestreamID)
-
 	if ok {
 		livestreamModel = livestream.(LivestreamModel)
 	} else {
-		err := tx.GetContext(ctx, &livestream, "SELECT * FROM livestreams WHERE id = ?", livestreamID)
+		err := tx.GetContext(ctx, &livestreamModel, "SELECT * FROM livestreams WHERE id = ?", livestreamID)
 		if err != nil {
 			return nil, err
 		}
