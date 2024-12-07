@@ -45,7 +45,6 @@ var (
 	themeModelCache     sync.Map
 	iconHashCache       sync.Map
 	imageCache          sync.Map
-	tagsCache           sync.Map
 )
 
 func init() {
@@ -162,21 +161,6 @@ func initializeHandler(c echo.Context) error {
 				time.Sleep(10 * time.Second)
 			}
 		}()
-
-		go func() {
-			context := context.Background()
-
-			var tags []TagModel
-			err := dbConn.SelectContext(context, &tags, "SELECT * FROM tags")
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-			for _, tag := range tags {
-				tagsCache.Store(tag.ID, tag)
-			}
-		}()
 	}
 
 	cacheLock.Lock()
@@ -186,7 +170,6 @@ func initializeHandler(c echo.Context) error {
 	themeModelCache = sync.Map{}
 	iconHashCache = sync.Map{}
 	imageCache = sync.Map{}
-	tagsCache = sync.Map{}
 	cacheLock.Unlock()
 
 	return c.JSON(http.StatusOK, InitializeResponse{

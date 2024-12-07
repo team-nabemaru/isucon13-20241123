@@ -51,22 +51,3 @@ func getThemeByUserId(ctx context.Context, tx db, userId int64) (*ThemeModel, er
 	}
 	return &themeModel, nil
 }
-
-func getTagById(ctx context.Context, tx db, tagId int64) (*TagModel, error) {
-	tagModel := TagModel{}
-	cachedTagModel, ok := tagsCache.Load(tagId)
-	if ok {
-		tagModel = cachedTagModel.(TagModel)
-	} else {
-		var tags []TagModel
-		err := tx.SelectContext(ctx, &tags, "SELECT * FROM tags WHERE id = ?", tagId)
-		if err != nil {
-			return nil, err
-		}
-		for _, tag := range tags {
-			tagsCache.Store(tag.ID, tag)
-		}
-		tagModel = tags[0]
-	}
-	return &tagModel, nil
-}
