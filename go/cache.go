@@ -70,3 +70,20 @@ func getTagById(ctx context.Context, tx db, tagId int64) (*TagModel, error) {
 	}
 	return &tagModel, nil
 }
+
+func getLivestream(ctx context.Context, tx db, livestreamID int) (*LivestreamModel, error) {
+	livestreamModel := LivestreamModel{}
+	livestream, ok := livestreamCache.Load(livestreamID)
+
+	if ok {
+		livestreamModel = livestream.(LivestreamModel)
+	} else {
+		err := tx.GetContext(ctx, &livestream, "SELECT * FROM livestreams WHERE id = ?", livestreamID)
+		if err != nil {
+			return nil, err
+		}
+		livestreamCache.Store(livestreamID, livestreamModel)
+	}
+
+	return &livestreamModel, nil
+}
