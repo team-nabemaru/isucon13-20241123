@@ -156,6 +156,8 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
+	iconHashCache.Delete(userID)
+
 	return c.JSON(http.StatusCreated, &PostIconResponse{
 		ID: iconID,
 	})
@@ -411,16 +413,29 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	// 	return User{}, err
 	// }
 	var themeModel ThemeModel
-	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
-		return User{}, err
+	cachedThemeModel, ok := themeModelCache.Load(userModel.ID)
+	if ok {
+		themeModel = cachedThemeModel.(ThemeModel)
+	} else {
+		err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID)
+		if err != nil {
+			return User{}, err
+		}
+		themeModelCache.Store(userModel.ID, themeModel)
 	}
 
 	var iconHash string
-	if err := tx.GetContext(ctx, &iconHash, "SELECT icon_hash FROM icons WHERE user_id = ?", userModel.ID); err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return User{}, err
-		}
+	cacheedIconHash, ok := iconHashCache.Load(userModel.ID)
+	if ok {
+		iconHash = cacheedIconHash.(string)
+	} else {
 
+		if err := tx.GetContext(ctx, &iconHash, "SELECT icon_hash FROM icons WHERE user_id = ?", userModel.ID); err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return User{}, err
+			}
+		}
+		iconHashCache.Store(userModel.ID, iconHash)
 	}
 
 	if iconHash == "" {

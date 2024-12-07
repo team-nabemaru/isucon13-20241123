@@ -41,6 +41,8 @@ var (
 	cacheLock           = sync.Mutex{}
 	livestreamTagsCache sync.Map
 	usersCache          sync.Map
+	themeModelCache     sync.Map
+	iconHashCache       sync.Map
 )
 
 func init() {
@@ -161,6 +163,8 @@ func initializeHandler(c echo.Context) error {
 	cacheLock.Lock()
 	livestreamTagsCache = sync.Map{}
 	usersCache = sync.Map{}
+	themeModelCache = sync.Map{}
+	iconHashCache = sync.Map{}
 	cacheLock.Unlock()
 
 	return c.JSON(http.StatusOK, InitializeResponse{
